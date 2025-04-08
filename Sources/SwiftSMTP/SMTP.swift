@@ -155,4 +155,24 @@ public struct SMTP {
             completion?([], mails.map { ($0, error) })
         }
     }
+
+    public func sendRaw(from: String, to: [String], raw: String, completion: @escaping (Error?) -> Void) {
+        connect { error in
+            guard error == nil else {
+                completion(error)
+                return
+            }
+    
+            self.sendCommand("MAIL FROM:<\(from)>") { _ in
+                self.sendRecipients(to) {
+                    self.sendCommand("DATA") { _ in
+                        self.sendCommand(raw + "\r\n.") { _ in
+                            self.quit()
+                            completion(nil)
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
